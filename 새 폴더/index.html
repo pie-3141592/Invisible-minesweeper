@@ -1,0 +1,3232 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Invisible Minesweeper</title>
+
+
+<style>
+
+/* =========================================================
+   기본
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+}
+
+body {
+
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #3b414b 0%,
+            #20242a 45%,
+            #111318 100%
+        );
+
+    color: white;
+
+    font-family:
+        Arial,
+        "Malgun Gothic",
+        sans-serif;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: 18px;
+}
+
+
+/* =========================================================
+   전체 게임
+========================================================= */
+
+.game {
+
+    width: 100%;
+
+    max-width: 1500px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   제목
+========================================================= */
+
+h1 {
+
+    margin: 0 0 16px;
+
+    font-size: 30px;
+
+    font-weight: 800;
+
+    color: #f2f2f2;
+
+    text-shadow:
+        0 2px 3px #000;
+}
+
+
+/* =========================================================
+   위쪽 UI
+========================================================= */
+
+.topbar {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+.info {
+
+    min-width: 95px;
+
+    padding: 9px 13px;
+
+    background: #17191e;
+
+    border: 2px solid #4c515b;
+
+    border-radius: 6px;
+
+    box-shadow:
+        inset 0 1px 2px
+        rgba(255,255,255,0.08),
+
+        0 2px 5px
+        rgba(0,0,0,0.35);
+
+    color: #ff4b55;
+
+    font-family: monospace;
+
+    font-size: 17px;
+
+    font-weight: bold;
+}
+
+.info span {
+
+    color: white;
+}
+
+
+button,
+select {
+
+    min-height: 42px;
+
+    border: 2px solid #656b75;
+
+    border-radius: 6px;
+
+    padding: 9px 13px;
+
+    background: #3b3f48;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    box-shadow:
+        inset 0 1px
+        rgba(255,255,255,0.18),
+
+        0 2px 4px
+        rgba(0,0,0,0.35);
+}
+
+button:hover,
+select:hover {
+
+    background: #4b515b;
+}
+
+button:active {
+
+    transform: translateY(1px);
+}
+
+
+select option {
+
+    background: #3b3f48;
+
+    color: white;
+}
+
+
+/* =========================================================
+   커스텀 설정
+========================================================= */
+
+.custom-settings {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex-wrap: wrap;
+
+    width: 100%;
+
+    margin-top: 6px;
+
+    margin-bottom: 12px;
+}
+
+
+.custom-settings label {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    color: #d9dce1;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+
+.custom-settings input {
+
+    width: 65px;
+
+    height: 38px;
+
+    padding: 6px 8px;
+
+    border: 2px solid #656b75;
+
+    border-radius: 5px;
+
+    background: #17191e;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    text-align: center;
+
+    outline: none;
+}
+
+
+.custom-settings input:focus {
+
+    border-color: #8b939f;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(120,140,170,0.2);
+}
+
+
+/* =========================================================
+   불가능한 보드 메시지
+========================================================= */
+
+.invalid-message {
+
+    min-width: 170px;
+
+    color: #ff555f;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    text-align: left;
+}
+
+
+/* =========================================================
+   게임판 바깥
+========================================================= */
+
+.board-wrapper {
+
+    position: relative;
+
+    width: 100%;
+
+    max-height: 80vh;
+
+    overflow: auto;
+
+    padding: 14px;
+
+    background: #252930;
+
+    border: 3px solid #101216;
+
+    border-radius: 8px;
+
+    box-shadow:
+
+        inset 0 0 0 2px #4b5059,
+
+        inset 0 0 15px
+        rgba(0,0,0,0.5),
+
+        0 5px 15px
+        rgba(0,0,0,0.5);
+}
+
+
+/* =========================================================
+   게임판
+========================================================= */
+
+.board {
+
+    display: grid;
+
+    gap: 2px;
+
+    width: max-content;
+
+    margin: auto;
+
+    user-select: none;
+
+    touch-action: manipulation;
+}
+
+
+/* =========================================================
+   닫힌 칸
+========================================================= */
+
+.cell {
+
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #858b95 0%,
+            #666c76 45%,
+            #515761 100%
+        );
+
+    border-top:
+        2px solid #aeb4bd;
+
+    border-left:
+        2px solid #aeb4bd;
+
+    border-right:
+        2px solid #34383f;
+
+    border-bottom:
+        2px solid #34383f;
+
+    border-radius: 2px;
+
+    color: white;
+
+    font-size: 21px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 1px 2px
+        rgba(0,0,0,0.65);
+}
+
+
+.cell:hover {
+
+    background:
+        linear-gradient(
+            145deg,
+            #959ba5,
+            #737983
+        );
+}
+
+
+/* =========================================================
+   열린 칸
+========================================================= */
+
+.cell.open {
+
+    background: #30343b;
+
+    border: 1px solid #171a1f;
+
+    cursor: default;
+
+    box-shadow:
+        inset 0 1px 3px
+        rgba(0,0,0,0.55);
+}
+
+
+.cell.open:hover {
+
+    background: #30343b;
+}
+
+
+/* =========================================================
+   깃발
+========================================================= */
+
+.cell.flag {
+
+    background:
+        linear-gradient(
+            145deg,
+            #626872,
+            #454a53
+        );
+
+    color: #ff3945;
+
+    font-size: 18px;
+
+    text-shadow:
+        0 1px 2px #000;
+}
+
+
+/* =========================================================
+   지뢰
+========================================================= */
+
+.cell.mine {
+
+    background:
+        radial-gradient(
+            circle,
+            #555 0%,
+            #292929 45%,
+            #111 70%
+        );
+
+    color: white;
+
+    border: 1px solid #111;
+
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   폭발
+========================================================= */
+
+.cell.exploded {
+
+    background:
+        radial-gradient(
+            circle,
+            #ff8585,
+            #e63743 45%,
+            #9d1823 100%
+        );
+
+    color: white;
+
+    border: 1px solid #ff9a9a;
+
+    animation:
+        explosion 0.25s ease-out;
+}
+
+
+@keyframes explosion {
+
+    0% {
+        transform: scale(0.75);
+    }
+
+    60% {
+        transform: scale(1.12);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+/* =========================================================
+   숫자 색상
+========================================================= */
+
+.number-1 {
+
+    color: #1677ff;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-2 {
+
+    color: #20b354;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-3 {
+
+    color: #ff3030;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-4 {
+
+    color: #3949ab;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-5 {
+
+    color: #a52a2a;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-6 {
+
+    color: #00a6a6;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+.number-7 {
+
+    color: #111111;
+
+    text-shadow:
+        0 1px 1px
+        rgba(255,255,255,0.35);
+}
+
+
+.number-8 {
+
+    color: #777777;
+
+    text-shadow:
+        0 1px 1px
+        rgba(0,0,0,0.75);
+}
+
+
+/* =========================================================
+   결과창
+========================================================= */
+
+.result-overlay {
+
+    position: absolute;
+
+    left: 50%;
+
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 100;
+
+    min-width: 300px;
+
+    padding: 28px 35px;
+
+    background:
+        rgba(20,22,27,0.96);
+
+    border:
+        2px solid #737985;
+
+    border-radius: 10px;
+
+    box-shadow:
+
+        0 8px 30px
+        rgba(0,0,0,0.65),
+
+        inset 0 1px 2px
+        rgba(255,255,255,0.12);
+
+    text-align: center;
+
+    backdrop-filter:
+        blur(5px);
+}
+
+
+/* =========================================================
+   X 버튼
+========================================================= */
+
+.result-close {
+
+    position: absolute;
+
+    top: 6px;
+
+    right: 8px;
+
+    width: 30px;
+
+    height: 30px;
+
+    min-height: 30px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #aeb3bb;
+
+    font-size: 25px;
+
+    font-weight: normal;
+
+    line-height: 30px;
+
+    box-shadow: none;
+}
+
+
+.result-close:hover {
+
+    background: transparent;
+
+    color: white;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   결과 제목
+========================================================= */
+
+.result-title {
+
+    font-size: 30px;
+
+    font-weight: 800;
+
+    color: white;
+
+    margin-bottom: 12px;
+}
+
+
+/* =========================================================
+   결과 시간
+========================================================= */
+
+.result-time {
+
+    font-family: monospace;
+
+    font-size: 32px;
+
+    font-weight: 800;
+
+    color: #ffd84d;
+
+    margin-bottom: 8px;
+}
+
+
+/* =========================================================
+   完成率
+========================================================= */
+
+.result-progress {
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    color: #d9dce1;
+
+    margin-bottom: 20px;
+}
+
+
+/* =========================================================
+   결과 버튼
+========================================================= */
+
+.result-buttons {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+}
+
+
+.result-buttons button {
+
+    min-width: 105px;
+}
+
+
+/* =========================================================
+   도움말
+========================================================= */
+
+.help {
+
+    margin-top: 10px;
+
+    color: #aeb3bb;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   모바일
+========================================================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding: 8px;
+    }
+
+
+    h1 {
+
+        font-size: 24px;
+    }
+
+
+    .cell {
+
+        width: 28px;
+
+        height: 28px;
+
+        font-size: 18px;
+    }
+
+
+    .board-wrapper {
+
+        padding: 8px;
+    }
+
+
+    .invalid-message {
+
+        width: 100%;
+
+        text-align: center;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="game">
+
+
+<h1>
+    💣 Invisible Minesweeper
+</h1>
+
+
+<!-- =====================================================
+     상단 UI
+===================================================== -->
+
+<div class="topbar">
+
+
+    <!-- 남은 지뢰 -->
+
+    <div class="info">
+
+        🚩
+
+        <span id="mineCount">
+            10
+        </span>
+
+    </div>
+
+
+    <!-- 시간 -->
+
+    <div class="info">
+
+        ⏱
+
+        <span id="timer">
+            0.00
+        </span>
+
+    </div>
+
+
+    <!-- 난이도 -->
+
+    <select id="difficulty">
+
+        <option value="9,9,10">
+
+            초급 9×9 / 10
+
+        </option>
+
+
+        <option value="16,16,40">
+
+            중급 16×16 / 40
+
+        </option>
+
+
+        <option value="16,30,99">
+
+            상급 30×16 / 99
+
+        </option>
+
+
+        <option value="custom">
+
+            커스텀
+
+        </option>
+
+    </select>
+
+
+    <!-- 숫자 공개 확률 -->
+
+    <select id="numberChance">
+
+        <option value="0">
+
+            숫자 공개 0%
+
+        </option>
+
+
+        <option value="10">
+
+            숫자 공개 10%
+
+        </option>
+
+
+        <option value="20">
+
+            숫자 공개 20%
+
+        </option>
+
+
+        <option value="30">
+
+            숫자 공개 30%
+
+        </option>
+
+
+        <option value="40">
+
+            숫자 공개 40%
+
+        </option>
+
+
+        <option value="50">
+
+            숫자 공개 50%
+
+        </option>
+
+
+        <option value="60">
+
+            숫자 공개 60%
+
+        </option>
+
+
+        <option value="70">
+
+            숫자 공개 70%
+
+        </option>
+
+
+        <option value="80">
+
+            숫자 공개 80%
+
+        </option>
+
+
+        <option value="90">
+
+            숫자 공개 90%
+
+        </option>
+
+
+        <option value="100">
+
+            숫자 공개 100%
+
+        </option>
+
+    </select>
+
+
+    <!-- 새 게임 -->
+
+    <button id="restart">
+
+        새 게임
+
+    </button>
+
+
+</div>
+
+
+<!-- =====================================================
+     커스텀 설정
+===================================================== -->
+
+<div
+    id="customSettings"
+    class="custom-settings"
+    style="display:none;"
+>
+
+
+    <label>
+
+        가로
+
+        <input
+            id="customCols"
+            type="text"
+            inputmode="numeric"
+            value="20"
+        >
+
+    </label>
+
+
+    <span>
+        ×
+    </span>
+
+
+    <label>
+
+        세로
+
+        <input
+            id="customRows"
+            type="text"
+            inputmode="numeric"
+            value="20"
+        >
+
+    </label>
+
+
+    <span>
+        /
+    </span>
+
+
+    <label>
+
+        지뢰
+
+        <input
+            id="customMines"
+            type="text"
+            inputmode="numeric"
+            value="50"
+        >
+
+    </label>
+
+
+    <!-- 불가능 메시지 -->
+
+    <span
+        id="invalidMessage"
+        class="invalid-message"
+    ></span>
+
+
+</div>
+
+
+<!-- =====================================================
+     게임판
+===================================================== -->
+
+<div class="board-wrapper">
+
+
+    <div
+        id="board"
+        class="board"
+    ></div>
+
+
+</div>
+
+
+<!-- =====================================================
+     도움말
+===================================================== -->
+
+<div class="help">
+
+    좌클릭: 칸 열기 /
+    열린 칸 클릭: 화음<br>
+
+    우클릭: 깃발 설치·제거 /
+    스페이스바: 새 게임
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   Minesweeper
+========================================================= */
+
+class Minesweeper {
+
+
+    constructor(
+        rows,
+        cols,
+        mines,
+        numberChance
+    ) {
+
+        this.rows =
+            rows;
+
+        this.cols =
+            cols;
+
+        this.mineTotal =
+            mines;
+
+        this.numberChance =
+            numberChance;
+
+
+        this.cells =
+            [];
+
+
+        this.started =
+            false;
+
+
+        this.gameOver =
+            false;
+
+
+        this.won =
+            false;
+
+
+        this.flags =
+            0;
+
+
+        /*
+         * 열린 칸 수
+         *
+         * 깃발은 절대 포함하지 않음
+         */
+
+        this.opened =
+            0;
+
+
+        this.time =
+            0;
+
+
+        this.startTime =
+            null;
+
+
+        this.timerId =
+            null;
+
+
+        this.createBoard();
+    }
+
+
+    /* =====================================================
+       보드 생성
+    ===================================================== */
+
+    createBoard() {
+
+        this.cells =
+            [];
+
+
+        for (
+            let r = 0;
+            r < this.rows;
+            r++
+        ) {
+
+            this.cells[r] =
+                [];
+
+
+            for (
+                let c = 0;
+                c < this.cols;
+                c++
+            ) {
+
+                this.cells[r][c] = {
+
+                    row:
+                        r,
+
+                    col:
+                        c,
+
+                    mine:
+                        false,
+
+                    open:
+                        false,
+
+                    flag:
+                        false,
+
+                    exploded:
+                        false,
+
+                    /*
+                     * 숫자를 보여줄지
+                     */
+
+                    showNumber:
+                        false
+
+                };
+
+            }
+        }
+    }
+
+
+    /* =====================================================
+       게임 시작
+    ===================================================== */
+
+    start(
+        firstRow,
+        firstCol
+    ) {
+
+        this.placeMines(
+            firstRow,
+            firstCol
+        );
+
+
+        this.started =
+            true;
+
+
+        this.startTime =
+            performance.now();
+
+
+        /*
+         * 0.01초 단위 타이머
+         */
+
+        this.timerId =
+            setInterval(
+                () => {
+
+                    if (
+                        !this.gameOver
+                    ) {
+
+                        this.time =
+                            (
+                                performance.now()
+                                -
+                                this.startTime
+                            ) / 1000;
+
+
+                        document
+                            .getElementById(
+                                "timer"
+                            )
+                            .textContent =
+                            this.time.toFixed(2);
+                    }
+
+                },
+                10
+            );
+    }
+
+
+    /* =====================================================
+       지뢰 배치
+
+       ★ 첫 클릭한 칸 하나만 안전
+       ★ 주변 칸은 보호하지 않음
+    ===================================================== */
+
+    placeMines(
+        safeRow,
+        safeCol
+    ) {
+
+        const forbidden =
+            new Set();
+
+
+        forbidden.add(
+            `${safeRow},${safeCol}`
+        );
+
+
+        const available =
+            [];
+
+
+        for (
+            let r = 0;
+            r < this.rows;
+            r++
+        ) {
+
+            for (
+                let c = 0;
+                c < this.cols;
+                c++
+            ) {
+
+                if (
+                    !forbidden.has(
+                        `${r},${c}`
+                    )
+                ) {
+
+                    available.push(
+                        this.cells[r][c]
+                    );
+                }
+            }
+        }
+
+
+        this.shuffle(
+            available
+        );
+
+
+        for (
+            let i = 0;
+
+            i < this.mineTotal &&
+            i < available.length;
+
+            i++
+        ) {
+
+            available[i].mine =
+                true;
+        }
+    }
+
+
+    /* =====================================================
+       배열 섞기
+    ===================================================== */
+
+    shuffle(array) {
+
+        for (
+            let i =
+                array.length - 1;
+
+            i > 0;
+
+            i--
+        ) {
+
+            const j =
+                Math.floor(
+                    Math.random()
+                    *
+                    (i + 1)
+                );
+
+
+            [
+                array[i],
+                array[j]
+            ] =
+            [
+                array[j],
+                array[i]
+            ];
+        }
+    }
+
+
+    /* =====================================================
+       주변 칸
+    ===================================================== */
+
+    neighbors(
+        row,
+        col
+    ) {
+
+        const result =
+            [];
+
+
+        for (
+            let dr = -1;
+            dr <= 1;
+            dr++
+        ) {
+
+            for (
+                let dc = -1;
+                dc <= 1;
+                dc++
+            ) {
+
+                if (
+                    dr === 0 &&
+                    dc === 0
+                ) {
+
+                    continue;
+                }
+
+
+                const r =
+                    row + dr;
+
+
+                const c =
+                    col + dc;
+
+
+                if (
+                    r >= 0 &&
+                    r < this.rows &&
+                    c >= 0 &&
+                    c < this.cols
+                ) {
+
+                    result.push(
+                        this.cells[r][c]
+                    );
+                }
+            }
+        }
+
+
+        return result;
+    }
+
+
+    /* =====================================================
+       칸 열기
+    ===================================================== */
+
+    open(
+        row,
+        col
+    ) {
+
+        if (
+            this.gameOver
+        ) {
+
+            return;
+        }
+
+
+        const cell =
+            this.cells[row][col];
+
+
+        if (
+            cell.flag
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * 첫 클릭
+         */
+
+        if (
+            !this.started
+        ) {
+
+            this.start(
+                row,
+                col
+            );
+        }
+
+
+        /*
+         * 이미 열린 칸
+         * → 화음
+         */
+
+        if (
+            cell.open
+        ) {
+
+            this.chord(
+                row,
+                col
+            );
+
+
+            this.render();
+
+            return;
+        }
+
+
+        /*
+         * 지뢰
+         */
+
+        if (
+            cell.mine
+        ) {
+
+            cell.exploded =
+                true;
+
+
+            this.lose();
+
+            return;
+        }
+
+
+        /*
+         * 일반 칸
+         */
+
+        this.openCell(
+            row,
+            col
+        );
+
+
+        this.checkWin();
+
+
+        this.render();
+    }
+
+
+    /* =====================================================
+       실제 칸 열기
+    ===================================================== */
+
+    openCell(
+        row,
+        col
+    ) {
+
+        const cell =
+            this.cells[row][col];
+
+
+        if (
+            cell.open ||
+            cell.flag ||
+            cell.mine
+        ) {
+
+            return;
+        }
+
+
+        cell.open =
+            true;
+
+
+        /*
+         * ★ 깃발은 이 값에 절대 들어가지 않음
+         */
+
+        this.opened++;
+
+
+        const surroundingMines =
+            this.countMines(
+                row,
+                col
+            );
+
+
+        /*
+         * ★ 0은 숫자가 아니다.
+         *
+         * 따라서 0일 때는
+         * 확률 계산조차 하지 않는다.
+         */
+
+        if (
+            surroundingMines > 0
+        ) {
+
+            if (
+                Math.random() * 100
+                <
+                this.numberChance
+            ) {
+
+                cell.showNumber =
+                    true;
+            }
+        }
+
+
+        /*
+         * 주변에 지뢰가 없으면
+         * 주변 안전 칸 자동 오픈
+         */
+
+        if (
+            surroundingMines === 0
+        ) {
+
+            for (
+                const neighbor of
+                this.neighbors(
+                    row,
+                    col
+                )
+            ) {
+
+                if (
+                    !neighbor.open &&
+                    !neighbor.flag &&
+                    !neighbor.mine
+                ) {
+
+                    this.openCell(
+                        neighbor.row,
+                        neighbor.col
+                    );
+                }
+            }
+        }
+    }
+
+
+    /* =====================================================
+       주변 지뢰 수
+    ===================================================== */
+
+    countMines(
+        row,
+        col
+    ) {
+
+        return this
+            .neighbors(
+                row,
+                col
+            )
+            .filter(
+                cell =>
+                    cell.mine
+            )
+            .length;
+    }
+
+
+    /* =====================================================
+       주변 깃발 수
+    ===================================================== */
+
+    countFlags(
+        row,
+        col
+    ) {
+
+        return this
+            .neighbors(
+                row,
+                col
+            )
+            .filter(
+                cell =>
+                    cell.flag
+            )
+            .length;
+    }
+
+
+    /* =====================================================
+       화음
+    ===================================================== */
+
+    chord(
+        row,
+        col
+    ) {
+
+        if (
+            this.gameOver
+        ) {
+
+            return;
+        }
+
+
+        const actualMines =
+            this.countMines(
+                row,
+                col
+            );
+
+
+        const flags =
+            this.countFlags(
+                row,
+                col
+            );
+
+
+        /*
+         * 실제 지뢰 수와
+         * 깃발 수가 다르면 실패
+         */
+
+        if (
+            actualMines !== flags
+        ) {
+
+            this.chordFailEffect(
+                row,
+                col
+            );
+
+            return;
+        }
+
+
+        /*
+         * 화음 실행
+         */
+
+        for (
+            const neighbor of
+            this.neighbors(
+                row,
+                col
+            )
+        ) {
+
+            if (
+                neighbor.open ||
+                neighbor.flag
+            ) {
+
+                continue;
+            }
+
+
+            /*
+             * 지뢰 발견
+             */
+
+            if (
+                neighbor.mine
+            ) {
+
+                neighbor.exploded =
+                    true;
+
+
+                this.lose();
+
+                return;
+            }
+
+
+            /*
+             * 안전 칸 열기
+             */
+
+            this.openCell(
+                neighbor.row,
+                neighbor.col
+            );
+        }
+
+
+        this.checkWin();
+    }
+
+
+    /* =====================================================
+       화음 실패 효과
+    ===================================================== */
+
+    chordFailEffect(
+        row,
+        col
+    ) {
+
+        const element =
+            this.getElement(
+                row,
+                col
+            );
+
+
+        if (
+            !element
+        ) {
+
+            return;
+        }
+
+
+        element.animate(
+            [
+
+                {
+                    transform:
+                        "translateX(0)"
+                },
+
+                {
+                    transform:
+                        "translateX(-3px)"
+                },
+
+                {
+                    transform:
+                        "translateX(3px)"
+                },
+
+                {
+                    transform:
+                        "translateX(-2px)"
+                },
+
+                {
+                    transform:
+                        "translateX(2px)"
+                },
+
+                {
+                    transform:
+                        "translateX(0)"
+                }
+
+            ],
+            {
+                duration:
+                    180
+            }
+        );
+    }
+
+
+    /* =====================================================
+       깃발
+    ===================================================== */
+
+    toggleFlag(
+        row,
+        col
+    ) {
+
+        if (
+            this.gameOver
+        ) {
+
+            return;
+        }
+
+
+        const cell =
+            this.cells[row][col];
+
+
+        if (
+            cell.open
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * 깃발 제거
+         */
+
+        if (
+            cell.flag
+        ) {
+
+            cell.flag =
+                false;
+
+
+            this.flags--;
+        }
+
+
+        /*
+         * 깃발 설치
+         */
+
+        else {
+
+            /*
+             * 남은 지뢰보다
+             * 더 많이 꽂지 못하게 함
+             */
+
+            if (
+                this.flags >=
+                this.mineTotal
+            ) {
+
+                return;
+            }
+
+
+            /*
+             * 첫 우클릭으로
+             * 게임이 시작될 수도 있음
+             */
+
+            if (
+                !this.started
+            ) {
+
+                this.start(
+                    row,
+                    col
+                );
+            }
+
+
+            cell.flag =
+                true;
+
+
+            this.flags++;
+        }
+
+
+        this.render();
+    }
+
+
+    /* =====================================================
+       승리 확인
+    ===================================================== */
+
+    checkWin() {
+
+        const safeCells =
+            this.rows *
+            this.cols
+            -
+            this.mineTotal;
+
+
+        if (
+            this.opened >=
+            safeCells
+        ) {
+
+            this.win();
+        }
+    }
+
+
+    /* =====================================================
+       결과창
+    ===================================================== */
+
+    showResult(
+        success,
+        progress
+    ) {
+
+        const old =
+            document.querySelector(
+                ".result-overlay"
+            );
+
+
+        if (
+            old
+        ) {
+
+            old.remove();
+        }
+
+
+        const wrapper =
+            document.querySelector(
+                ".board-wrapper"
+            );
+
+
+        const overlay =
+            document.createElement(
+                "div"
+            );
+
+
+        overlay.className =
+            "result-overlay";
+
+
+        const title =
+            success
+                ? "🎉 CLEAR!"
+                : "💥 실패";
+
+
+        let progressHTML =
+            "";
+
+
+        /*
+         * 실패일 때만 완료율
+         */
+
+        if (
+            !success
+        ) {
+
+            progressHTML = `
+
+                <div
+                    class="result-progress"
+                >
+
+                    ${progress.toFixed(2)}% 완료
+
+                </div>
+
+            `;
+        }
+
+
+        overlay.innerHTML = `
+
+            <button
+                class="result-close"
+                title="닫기"
+            >
+                ×
+            </button>
+
+
+            <div
+                class="result-title"
+            >
+
+                ${title}
+
+            </div>
+
+
+            <div
+                class="result-time"
+            >
+
+                ${this.time.toFixed(2)}초
+
+            </div>
+
+
+            ${progressHTML}
+
+
+            <div
+                class="result-buttons"
+            >
+
+                <button
+                    class="result-restart"
+                >
+
+                    재시작
+
+                </button>
+
+            </div>
+
+        `;
+
+
+        wrapper.appendChild(
+            overlay
+        );
+
+
+        /*
+         * X
+         */
+
+        overlay
+            .querySelector(
+                ".result-close"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    overlay.remove();
+
+                }
+            );
+
+
+        /*
+         * 재시작
+         */
+
+        overlay
+            .querySelector(
+                ".result-restart"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    newGame();
+
+                }
+            );
+    }
+
+
+    /* =====================================================
+       성공
+    ===================================================== */
+
+    win() {
+
+        this.gameOver =
+            true;
+
+
+        this.won =
+            true;
+
+
+        clearInterval(
+            this.timerId
+        );
+
+
+        /*
+         * 최종 시간
+         */
+
+        this.time =
+            (
+                performance.now()
+                -
+                this.startTime
+            ) / 1000;
+
+
+        document
+            .getElementById(
+                "timer"
+            )
+            .textContent =
+            this.time.toFixed(2);
+
+
+        /*
+         * =================================================
+         * ★ 중요
+         *
+         * 클리어하면 모든 숫자를 공개한다.
+         *
+         * 단,
+         * 0은 존재하지 않는 숫자이므로
+         * showNumber 여부와 관계없이
+         * render에서 표시하지 않는다.
+         * =================================================
+         */
+
+        for (
+            let r = 0;
+            r < this.rows;
+            r++
+        ) {
+
+            for (
+                let c = 0;
+                c < this.cols;
+                c++
+            ) {
+
+                const cell =
+                    this.cells[r][c];
+
+
+                if (
+                    !cell.mine
+                ) {
+
+                    cell.showNumber =
+                        true;
+                }
+            }
+        }
+
+
+        /*
+         * 완성된 보드 표시
+         */
+
+        this.render();
+
+
+        /*
+         * 클리어 결과창
+         */
+
+        this.showResult(
+            true,
+            100
+        );
+    }
+
+
+    /* =====================================================
+       실패
+    ===================================================== */
+
+    lose() {
+
+        this.gameOver =
+            true;
+
+
+        this.won =
+            false;
+
+
+        clearInterval(
+            this.timerId
+        );
+
+
+        /*
+         * 최종 시간
+         */
+
+        this.time =
+            (
+                performance.now()
+                -
+                this.startTime
+            ) / 1000;
+
+
+        document
+            .getElementById(
+                "timer"
+            )
+            .textContent =
+            this.time.toFixed(2);
+
+
+        /*
+         * 모든 지뢰 공개
+         */
+
+        for (
+            let r = 0;
+            r < this.rows;
+            r++
+        ) {
+
+            for (
+                let c = 0;
+                c < this.cols;
+                c++
+            ) {
+
+                const cell =
+                    this.cells[r][c];
+
+
+                if (
+                    cell.mine
+                ) {
+
+                    cell.open =
+                        true;
+                }
+            }
+        }
+
+
+        /*
+         * =================================================
+         * 실패 완료율
+         *
+         * 열린 안전 칸
+         * /
+         * 전체 안전 칸
+         *
+         * 깃발은 this.opened에
+         * 포함되지 않는다.
+         * =================================================
+         */
+
+        const totalSafeCells =
+            this.rows *
+            this.cols
+            -
+            this.mineTotal;
+
+
+        let progress =
+            0;
+
+
+        if (
+            totalSafeCells > 0
+        ) {
+
+            progress =
+                (
+                    this.opened
+                    /
+                    totalSafeCells
+                )
+                *
+                100;
+        }
+
+
+        /*
+         * 범위 제한
+         */
+
+        progress =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    progress
+                )
+            );
+
+
+        /*
+         * 지뢰가 공개된
+         * 최종 보드
+         */
+
+        this.render();
+
+
+        /*
+         * 실패 결과창
+         */
+
+        this.showResult(
+            false,
+            progress
+        );
+    }
+
+
+    /* =====================================================
+       HTML 요소 찾기
+    ===================================================== */
+
+    getElement(
+        row,
+        col
+    ) {
+
+        return document.querySelector(
+            `.cell[data-row="${row}"][data-col="${col}"]`
+        );
+    }
+
+
+    /* =====================================================
+       화면 그리기
+    ===================================================== */
+
+    render() {
+
+        const board =
+            document.getElementById(
+                "board"
+            );
+
+
+        board.innerHTML =
+            "";
+
+
+        /*
+         * 큰 보드에서는
+         * 칸 크기를 조금 줄인다.
+         */
+
+        let cellSize =
+            32;
+
+
+        if (
+            this.rows >= 35 ||
+            this.cols >= 35
+        ) {
+
+            cellSize =
+                26;
+
+        }
+
+        else if (
+            this.rows >= 25 ||
+            this.cols >= 25
+        ) {
+
+            cellSize =
+                28;
+        }
+
+
+        board.style.gridTemplateColumns =
+            `repeat(${this.cols}, ${cellSize}px)`;
+
+
+        /*
+         * 모든 칸 생성
+         */
+
+        for (
+            let r = 0;
+            r < this.rows;
+            r++
+        ) {
+
+            for (
+                let c = 0;
+                c < this.cols;
+                c++
+            ) {
+
+                const cell =
+                    this.cells[r][c];
+
+
+                const element =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                element.className =
+                    "cell";
+
+
+                element.style.width =
+                    `${cellSize}px`;
+
+
+                element.style.height =
+                    `${cellSize}px`;
+
+
+                if (
+                    cellSize <= 28
+                ) {
+
+                    element.style.fontSize =
+                        "17px";
+                }
+
+
+                element.dataset.row =
+                    r;
+
+
+                element.dataset.col =
+                    c;
+
+
+                /*
+                 * 열린 칸
+                 */
+
+                if (
+                    cell.open
+                ) {
+
+                    element.classList.add(
+                        "open"
+                    );
+                }
+
+
+                /*
+                 * =================================================
+                 * 숫자 표시
+                 *
+                 * ★ 0은 표시하지 않는다.
+                 *
+                 * 숫자는 1~8만 존재한다.
+                 * =================================================
+                 */
+
+                if (
+                    cell.open &&
+                    cell.showNumber &&
+                    !cell.mine
+                ) {
+
+                    const number =
+                        this.countMines(
+                            r,
+                            c
+                        );
+
+
+                    if (
+                        number > 0
+                    ) {
+
+                        element.textContent =
+                            number;
+
+
+                        element.classList.add(
+                            `number-${number}`
+                        );
+                    }
+                }
+
+
+                /*
+                 * 깃발
+                 */
+
+                if (
+                    cell.flag
+                ) {
+
+                    element.classList.add(
+                        "flag"
+                    );
+
+
+                    element.textContent =
+                        "🚩";
+                }
+
+
+                /*
+                 * 게임 종료 후 지뢰
+                 */
+
+                if (
+                    this.gameOver &&
+                    cell.mine
+                ) {
+
+                    element.classList.add(
+                        "mine"
+                    );
+
+
+                    element.textContent =
+                        "💣";
+                }
+
+
+                /*
+                 * 폭발한 지뢰
+                 */
+
+                if (
+                    cell.exploded
+                ) {
+
+                    element.classList.add(
+                        "exploded"
+                    );
+
+
+                    element.textContent =
+                        "💥";
+                }
+
+
+                /*
+                 * 좌클릭
+                 */
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        this.open(
+                            r,
+                            c
+                        );
+
+                    }
+                );
+
+
+                /*
+                 * 우클릭
+                 */
+
+                element.addEventListener(
+                    "contextmenu",
+                    (event) => {
+
+                        event.preventDefault();
+
+
+                        this.toggleFlag(
+                            r,
+                            c
+                        );
+
+                    }
+                );
+
+
+                board.appendChild(
+                    element
+                );
+            }
+        }
+
+
+        /*
+         * =================================================
+         * 남은 지뢰 수
+         *
+         * 전체 지뢰 수가 아니라
+         * "남은 지뢰 수"를 표시한다.
+         * =================================================
+         */
+
+        const remaining =
+            this.mineTotal
+            -
+            this.flags;
+
+
+        document
+            .getElementById(
+                "mineCount"
+            )
+            .textContent =
+            remaining;
+    }
+
+}
+
+
+/* =========================================================
+   전역 게임
+========================================================= */
+
+let game =
+    null;
+
+
+/* =========================================================
+   불가능한 보드 처리
+========================================================= */
+
+function showInvalidBoard() {
+
+
+    /*
+     * 기존 타이머 제거
+     */
+
+    if (
+        game &&
+        game.timerId
+    ) {
+
+        clearInterval(
+            game.timerId
+        );
+    }
+
+
+    game =
+        null;
+
+
+    /*
+     * 보드 제거
+     */
+
+    document
+        .getElementById(
+            "board"
+        )
+        .innerHTML =
+        "";
+
+
+    /*
+     * 상단 초기화
+     */
+
+    document
+        .getElementById(
+            "mineCount"
+        )
+        .textContent =
+        "—";
+
+
+    document
+        .getElementById(
+            "timer"
+        )
+        .textContent =
+        "0.00";
+
+
+    /*
+     * 결과창 제거
+     */
+
+    const overlay =
+        document.querySelector(
+            ".result-overlay"
+        );
+
+
+    if (
+        overlay
+    ) {
+
+        overlay.remove();
+    }
+}
+
+
+/* =========================================================
+   불가능 메시지
+========================================================= */
+
+function setInvalidMessage(
+    message
+) {
+
+    document
+        .getElementById(
+            "invalidMessage"
+        )
+        .textContent =
+        message;
+}
+
+
+/* =========================================================
+   새 게임
+========================================================= */
+
+function newGame() {
+
+
+    const difficulty =
+        document
+            .getElementById(
+                "difficulty"
+            )
+            .value;
+
+
+    let rows;
+
+    let cols;
+
+    let mines;
+
+
+    /*
+     * 불가능 메시지 초기화
+     */
+
+    setInvalidMessage("");
+
+
+    /* =====================================================
+       커스텀
+    ===================================================== */
+
+    if (
+        difficulty ===
+        "custom"
+    ) {
+
+
+        rows =
+            Number(
+                document
+                    .getElementById(
+                        "customRows"
+                    )
+                    .value
+            );
+
+
+        cols =
+            Number(
+                document
+                    .getElementById(
+                        "customCols"
+                    )
+                    .value
+            );
+
+
+        mines =
+            Number(
+                document
+                    .getElementById(
+                        "customMines"
+                    )
+                    .value
+            );
+
+
+        /*
+         * 숫자가 아닌 경우
+         */
+
+        if (
+            !Number.isInteger(rows) ||
+            !Number.isInteger(cols) ||
+            !Number.isInteger(mines)
+        ) {
+
+            setInvalidMessage(
+                "불가능한 보드입니다."
+            );
+
+
+            showInvalidBoard();
+
+
+            return;
+        }
+
+
+        /*
+         * 가로 / 세로
+         *
+         * 1~50
+         */
+
+        if (
+            rows < 1 ||
+            rows > 50 ||
+            cols < 1 ||
+            cols > 50
+        ) {
+
+            setInvalidMessage(
+                "불가능한 보드입니다."
+            );
+
+
+            showInvalidBoard();
+
+
+            return;
+        }
+
+
+        /*
+         * 지뢰는 음수 불가
+         */
+
+        if (
+            mines < 0
+        ) {
+
+            setInvalidMessage(
+                "불가능한 보드입니다."
+            );
+
+
+            showInvalidBoard();
+
+
+            return;
+        }
+
+
+        /*
+         * 첫 클릭 한 칸은 반드시 안전해야 함
+         *
+         * 따라서 최대 지뢰 =
+         * 전체 칸 - 1
+         */
+
+        const maximumMines =
+            rows *
+            cols
+            -
+            1;
+
+
+        if (
+            mines >
+            maximumMines
+        ) {
+
+            setInvalidMessage(
+                "불가능한 보드입니다."
+            );
+
+
+            showInvalidBoard();
+
+
+            return;
+        }
+
+    }
+
+
+    /* =====================================================
+       기본 난이도
+    ===================================================== */
+
+    else {
+
+
+        [
+            rows,
+            cols,
+            mines
+        ] =
+            difficulty
+                .split(",")
+                .map(Number);
+    }
+
+
+    /*
+     * 숫자 공개 확률
+     */
+
+    const numberChance =
+        Number(
+            document
+                .getElementById(
+                    "numberChance"
+                )
+                .value
+        );
+
+
+    /*
+     * 기존 게임 타이머 제거
+     */
+
+    if (
+        game &&
+        game.timerId
+    ) {
+
+        clearInterval(
+            game.timerId
+        );
+    }
+
+
+    /*
+     * 기존 결과창 제거
+     */
+
+    const oldOverlay =
+        document.querySelector(
+            ".result-overlay"
+        );
+
+
+    if (
+        oldOverlay
+    ) {
+
+        oldOverlay.remove();
+    }
+
+
+    /*
+     * 시간 초기화
+     */
+
+    document
+        .getElementById(
+            "timer"
+        )
+        .textContent =
+        "0.00";
+
+
+    /*
+     * 새 게임 생성
+     */
+
+    game =
+        new Minesweeper(
+            rows,
+            cols,
+            mines,
+            numberChance
+        );
+
+
+    /*
+     * 보드 표시
+     */
+
+    game.render();
+}
+
+
+/* =========================================================
+   새 게임 버튼
+========================================================= */
+
+document
+    .getElementById(
+        "restart"
+    )
+    .addEventListener(
+        "click",
+        newGame
+    );
+
+
+/* =========================================================
+   난이도 변경
+========================================================= */
+
+document
+    .getElementById(
+        "difficulty"
+    )
+    .addEventListener(
+        "change",
+        () => {
+
+
+            const value =
+                document
+                    .getElementById(
+                        "difficulty"
+                    )
+                    .value;
+
+
+            const settings =
+                document
+                    .getElementById(
+                        "customSettings"
+                    );
+
+
+            if (
+                value ===
+                "custom"
+            ) {
+
+                settings.style.display =
+                    "flex";
+
+            }
+
+            else {
+
+                settings.style.display =
+                    "none";
+            }
+
+
+            newGame();
+        }
+    );
+
+
+/* =========================================================
+   커스텀 입력 변경
+========================================================= */
+
+[
+    "customRows",
+    "customCols",
+    "customMines"
+
+].forEach(
+    (id) => {
+
+
+        document
+            .getElementById(id)
+            .addEventListener(
+                "change",
+                () => {
+
+
+                    if (
+                        document
+                            .getElementById(
+                                "difficulty"
+                            )
+                            .value ===
+                        "custom"
+                    ) {
+
+                        newGame();
+                    }
+
+                }
+            );
+    }
+);
+
+
+/* =========================================================
+   숫자 공개 확률 변경
+========================================================= */
+
+document
+    .getElementById(
+        "numberChance"
+    )
+    .addEventListener(
+        "change",
+        newGame
+    );
+
+
+/* =========================================================
+   스페이스바
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+
+        if (
+            event.code !==
+            "Space"
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * 입력창이나 버튼을 사용 중이면
+         * 스페이스바 새 게임 방지
+         */
+
+        const tag =
+            document
+                .activeElement
+                .tagName;
+
+
+        if (
+            tag === "SELECT" ||
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            tag === "BUTTON"
+        ) {
+
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        newGame();
+    }
+);
+
+
+/* =========================================================
+   최초 실행
+========================================================= */
+
+newGame();
+
+</script>
+
+</body>
+
+</html>
